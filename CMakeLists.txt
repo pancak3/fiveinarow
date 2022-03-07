@@ -5,4 +5,4 @@ set(CMAKE_C_STANDARD 11)
 
 include_directories(header)
 add_executable(fiveinarow
-        src/main.c src/game.c header/game.h header/main.h)
+        src/main.c src/game.c header/game.h header/main.h header/ai.h src/ai.c)

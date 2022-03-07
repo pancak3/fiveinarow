@@ -51,7 +51,7 @@ void printHeaderOrFooter() {
 void showBoard() {
     printHeaderOrFooter();
     for (int row = 0; row < HEIGHT; ++row) {
-        printf("%2d", HEIGHT - row);
+        printf("%2d", row);
         for (int col = 0; col < WIDTH; ++col) {
             if (gBoard[row][col] == NOT_OCCUPIED) {
                 printf(" %c ", BOARD);
@@ -66,7 +66,7 @@ void showBoard() {
                 continue;
             }
         }
-        printf("%d\r\n", HEIGHT - row);
+        printf("%d\r\n", row);
 
     }
     printHeaderOrFooter();
@@ -93,31 +93,29 @@ void playerPlace(int *placedRow, int *placedCol) {
     scanf("%s", position);
     printf("\r\n");
 
-    int col = position[0] - 'a';
-    if (col < 0 || col > WIDTH) {
+    int row = position[0] - 'a';
+    if (row < 0 || row > WIDTH) {
         printf("[!] Incorrect position.\r\n");
         return playerPlace(placedRow, placedCol);
     }
-    int row = 0;
+    int col = 0;
     if (position[2] - '0' >= 0) {
-        row += position[2] - '0';
-        row += 10 * (position[1] - '0');
+        col += position[2] - '0';
+        col += 10 * (position[1] - '0');
     } else {
-        row += position[1] - '0';
+        col += position[1] - '0';
     }
-    if (row < 0 || row > HEIGHT) {
+    if (col < 0 || col > HEIGHT) {
         printf("[!] Incorrect position.\r\n");
         return playerPlace(placedRow, placedCol);
     }
-    printf("[*] Placed at (%c, %d)\r\n", 'a' + col, row);
-    row = HEIGHT - row;
+    printf("[*] Placed at (%c, %d)\r\n", 'a' + row, col);
     if (gLastRound == WHITE) {
-        placeAndShow(BLACK, row, col);
+        placeAndShow(BLACK, col, row);
     }
-    placeAndShow(WHITE, row, col);
-    *placedRow = row;
-    *placedCol = col;
-
+    placeAndShow(WHITE, col, row);
+    *placedRow = col;
+    *placedCol = row;
 }
 
 int abs(int value) {
@@ -127,114 +125,84 @@ int abs(int value) {
     return value;
 }
 
-int checkLeft(int row, int col) {
-    int value = 0;
-    if (col < END_VALUE - 1) return FALSE;
-    for (int i = 0; i < END_VALUE; ++i) {
-        value += gBoard[row][col - i];
+int checkVertical(int row, int col) {
+    int stone = gBoard[row][col];
+    int offset = 0;
+    for (; offset < END_VALUE - 1 && row > 0; ++offset) {
+        --row;
     }
-    if (abs(value) == END_VALUE) return TRUE;
+    for (int i = 0, count = 0; i < END_VALUE + offset && row + i < HEIGHT;
+         ++i) {
+        if (stone == gBoard[row + i][col]) ++count;
+        if (i < END_VALUE) continue;
+        if (count == END_VALUE) return TRUE;
+        if (stone == gBoard[row + i - END_VALUE][col]) --count;
+    }
     return FALSE;
 }
 
-int checkRight(int row, int col) {
-    int value = 0;
-    if (col >= WIDTH - END_VALUE) return FALSE;
-    for (int i = 0; i < END_VALUE; ++i) {
-        value += gBoard[row][col + i];
+int checkHorizon(int row, int col) {
+    int stone = gBoard[row][col];
+    int offset = 0;
+    for (; offset < END_VALUE && col > 0; ++offset) {
+        --col;
     }
-    if (abs(value) == END_VALUE) return TRUE;
+    for (int i = 0, count = 0; i < END_VALUE + offset && col + i < WIDTH; ++i) {
+        if (stone == gBoard[row][col + i]) ++count;
+        if (i < END_VALUE) continue;
+        if (count == END_VALUE) return TRUE;
+        if (stone == gBoard[row][col + i - END_VALUE]) --count;
+    }
     return FALSE;
 }
 
-int checkUp(int row, int col) {
-    int value = 0;
-    if (row < END_VALUE - 1) return FALSE;
-    for (int i = 0; i < END_VALUE; ++i) {
-        value += gBoard[row - i][col];
+int checkRightOblique(int row, int col) {
+    int stone = gBoard[row][col];
+    int offset = 0;
+    for (; offset < END_VALUE && row > 0 && col > 0; ++offset) {
+        --row;
+        --col;
     }
-    if (abs(value) == END_VALUE) return TRUE;
+    for (int i = 0, count = 0;
+         i < END_VALUE + offset && row + i < HEIGHT && col + i < WIDTH;
+         ++i) {
+        if (stone == gBoard[row + i][col + i]) ++count;
+        if (i < END_VALUE) continue;
+        if (count == END_VALUE) return TRUE;
+        if (stone == gBoard[row + i - END_VALUE][col + i - END_VALUE]) --count;
+    }
     return FALSE;
 }
 
-int checkDown(int row, int col) {
-    int value = 0;
-    if (row > HEIGHT - END_VALUE) return FALSE;
-    for (int i = 0; i < END_VALUE; ++i) {
-        value += gBoard[row + i][col];
+int checkLeftOblique(int row, int col) {
+    int stone = gBoard[row][col];
+    int offset = 0;
+    for (; offset < END_VALUE && row > 0 && col < HEIGHT; ++offset) {
+        ++row;
+        --col;
     }
-    if (abs(value) == END_VALUE) return TRUE;
-    return FALSE;
-}
-
-
-int checkUpRight(int row, int col) {
-    int value = 0;
-    if (row < END_VALUE - 1 || col >= WIDTH - END_VALUE)
-        return FALSE;
-    for (int i = 0; i < END_VALUE; ++i) {
-        value += gBoard[row - i][col + i];
+    for (int i = 0, count = 0;
+         i < END_VALUE + offset && row + i < HEIGHT && col > 0;
+         ++i) {
+        if (stone == gBoard[row + i][col - i]) ++count;
+        if (i < END_VALUE) continue;
+        if (count == END_VALUE) return TRUE;
+        if (stone == gBoard[row + i - END_VALUE][col - i + END_VALUE]) --count;
     }
-    if (abs(value) == END_VALUE) return TRUE;
-    return FALSE;
-}
-
-int checkUpLeft(int row, int col) {
-    int value = 0;
-    if (row < END_VALUE - 1 || col < END_VALUE - 1) return FALSE;
-    for (int i = 0; i < END_VALUE; ++i) {
-        value += gBoard[row - i][col - i];
-    }
-    if (abs(value) == END_VALUE) return TRUE;
-    return FALSE;
-}
-
-int checkDownLeft(int row, int col) {
-    int value = 0;
-    if (row >= HEIGHT - END_VALUE || col < END_VALUE - 1)
-        return
-                FALSE;
-    for (int i = 0; i < END_VALUE; ++i) {
-        value += gBoard[row + i][col - i];
-    }
-    if (abs(value) == END_VALUE) return TRUE;
-    return FALSE;
-}
-
-int checkDownRight(int row, int col) {
-    int value = 0;
-    if (row >= HEIGHT - END_VALUE || col >= WIDTH - END_VALUE)
-        return FALSE;
-    for (int i = 0; i < END_VALUE; ++i) {
-        value += gBoard[row + i][col + i];
-    }
-    if (abs(value) == END_VALUE) return TRUE;
     return FALSE;
 }
 
 int isGameEnd(int row, int col) {
-    if (checkUp(row, col)) {
+    if (checkHorizon(row, col)) {
         return TRUE;
     }
-    if (checkDown(row, col)) {
+    if (checkVertical(row, col)) {
         return TRUE;
     }
-    if (checkLeft(row, col)) {
+    if (checkRightOblique(row, col)) {
         return TRUE;
     }
-    if (checkRight(row, col)) {
-        return TRUE;
-    }
-    if (checkUpRight(row, col)) {
-        return TRUE;
-    }
-    if (checkUpLeft(row, col)) {
-        return TRUE;
-    }
-    if (checkDownLeft(row, col)) {
-        return TRUE;
-    }
-    if (checkDownRight(row, col)) {
+    if (checkLeftOblique(row, col)) {
         return TRUE;
     }
     return FALSE;
