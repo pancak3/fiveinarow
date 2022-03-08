@@ -50,7 +50,7 @@ void printHeaderOrFooter() {
 
 void showBoard() {
     printHeaderOrFooter();
-    for (int row = 0; row < HEIGHT; ++row) {
+    for (int row = HEIGHT ; row > 0; --row) {
         printf("%2d", row);
         for (int col = 0; col < WIDTH; ++col) {
             if (gBoard[row][col] == NOT_OCCUPIED) {
